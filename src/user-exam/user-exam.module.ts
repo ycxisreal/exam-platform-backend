@@ -4,6 +4,6 @@ import { UserExamService } from './user-exam.service';
 
 @Module({
   controllers: [UserExamController],
-  providers: [UserExamService]
+  providers: [UserExamService],
 })
 export class UserExamModule {}

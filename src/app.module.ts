@@ -4,9 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuestionModule } from './question/question.module';
 import { TemplateModule } from './template/template.module';
 import { UserExamModule } from './user-exam/user-exam.module';
-
+import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql', // 或 postgres
       host: 'localhost',
