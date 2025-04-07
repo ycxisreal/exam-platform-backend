@@ -5,20 +5,23 @@ import { QuestionModule } from './question/question.module';
 import { TemplateModule } from './template/template.module';
 import { UserExamModule } from './user-exam/user-exam.module';
 import { ConfigModule } from '@nestjs/config';
+import * as process from 'node:process';
+import { JwtStrategy } from './common/jwt.strategy';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
-      type: 'mysql', // 或 postgres
+      type: 'mysql',
       host: 'localhost',
       port: 3306,
-      username: 'root',
-      password: '1234',
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
       database: 'examplatform',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'], // 自动加载 entity
-      synchronize: true, // 开发阶段可以为 true，会自动建表
+      entities: [__dirname + '/**/*.entity{.ts,.js}'], //加载 entity
+      synchronize: true,
     }),
     UserModule,
     QuestionModule,
@@ -26,6 +29,6 @@ import { ConfigModule } from '@nestjs/config';
     UserExamModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [JwtStrategy],
 })
 export class AppModule {}
