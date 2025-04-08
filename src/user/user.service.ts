@@ -4,7 +4,7 @@ import { User } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-
+// todo
 @Injectable()
 export class UserService {
   constructor(
@@ -73,7 +73,6 @@ export class UserService {
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     await this.userRepo.save(user);
-
     return { message: '密码修改成功' };
   }
   async deleteAccount(username: string, password: string) {

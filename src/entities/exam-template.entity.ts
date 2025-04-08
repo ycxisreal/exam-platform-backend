@@ -6,8 +6,12 @@ export class ExamTemplate {
   templateId: number;
   @Column({ name: 'exam_name', length: 100 })
   examName: string;
-  @Column({ name: 'exam_type', type: 'enum', enum: ['normal', 'makeup'] })
-  examType: 'normal' | 'makeup';
+  @Column({
+    name: 'exam_type',
+    type: 'enum',
+    enum: ['normal', 'makeup', 'special'],
+  })
+  examType: 'normal' | 'makeup' | 'special';
   @Column()
   duration: number;
   @Column({ name: 'total_score' })
@@ -20,6 +24,8 @@ export class ExamTemplate {
   availableStart: Date;
   @Column({ name: 'available_end', type: 'datetime' })
   availableEnd: Date;
+  @Column({ name: 'target_category_ids', type: 'json', nullable: true })
+  targetCategoryIds: number[];
   @OneToMany(() => UserExam, (userExam) => userExam.examTemplate)
   userExams: UserExam[];
 }
