@@ -42,4 +42,10 @@ export class TemplateController {
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.templateService.deleteTemplate(id);
   }
+  @Get('status/:status')
+  getByStatus(
+    @Param('status') status: 'upcoming' | 'ongoing' | 'finished',
+  ): Promise<ExamTemplate[]> {
+    return this.templateService.getTemplatesByStatus(status);
+  }
 }

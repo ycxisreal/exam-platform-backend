@@ -4,7 +4,6 @@ import { User } from '../entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-// todo
 @Injectable()
 export class UserService {
   constructor(
@@ -47,7 +46,7 @@ export class UserService {
       username,
       passwordHash,
       fullName,
-      role: 'user',
+      role: 'admin',
     });
     const saved = await this.userRepo.save(user);
     return {
@@ -76,6 +75,7 @@ export class UserService {
     return { message: '密码修改成功' };
   }
   async deleteAccount(username: string, password: string) {
+    console.log(username, password);
     const user = await this.userRepo.findOne({ where: { username } });
     if (!user) throw new UnauthorizedException('用户不存在');
     const isMatch = await bcrypt.compare(password, user.passwordHash);

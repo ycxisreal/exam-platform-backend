@@ -64,6 +64,33 @@ export class QuestionController {
   ): Promise<Question> {
     return this.svc.updateQuestion(id, data);
   }
+  @Post('batch')
+  async batchCreateQuestions(
+    @Body()
+    questions: Array<{
+      content: string;
+      score: number;
+      questionType: 'single' | 'multiple';
+      categoryId: number;
+      options: Array<{ content: string; isCorrect: boolean }>;
+    }>,
+  ) {
+    const createdQuestions = await this.svc.batchCreateQuestions(questions);
+    return {
+      message: '题目批量导入成功',
+      data: createdQuestions,
+    };
+  }
+  @Get('category/:categoryId')
+  getByCategory(
+    @Param('categoryId', ParseIntPipe) categoryId: number,
+  ): Promise<Question[]> {
+    return this.svc.getQuestionsByCategory(categoryId);
+  }
+  @Get('type/:type')
+  getByType(@Param('type') type: 'single' | 'multiple'): Promise<Question[]> {
+    return this.svc.getQuestionsByType(type);
+  }
 
   @Delete(':id')
   removeQuestion(@Param('id', ParseIntPipe) id: number): Promise<void> {
@@ -97,5 +124,20 @@ export class QuestionController {
   @Delete('options/:id')
   removeOption(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.svc.deleteOption(id);
+  }
+  @Post(':questionId/options/batch')
+  async batchCreateOptions(
+    @Param('questionId', ParseIntPipe) questionId: number,
+    @Body('options') options: Array<Partial<QuestionOption>>,
+  ) {
+    await this.svc.batchCreateOptions(questionId, options);
+    return { message: '选项添加成功' };
+  }
+  //删除某一题目id的所有选项
+  @Delete(':questionId/options')
+  async removeAllOptions(
+    @Param('questionId', ParseIntPipe) questionId: number,
+  ): Promise<void> {
+    return this.svc.deleteAllOptionsByQuestion(questionId);
   }
 }

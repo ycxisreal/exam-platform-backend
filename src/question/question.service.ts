@@ -16,7 +16,7 @@ export class QuestionService {
     private readonly catRepo: Repository<QuestionCategory>,
   ) {}
 
-  // --- Category ---
+  //分类
   async getAllCategories(): Promise<QuestionCategory[]> {
     return this.catRepo.find();
   }
@@ -43,7 +43,7 @@ export class QuestionService {
     if (res.affected === 0) throw new NotFoundException('分类不存在');
   }
 
-  // --- Question ---
+  // 题干
   async getAllQuestions(): Promise<Question[]> {
     return this.qRepo.find({ relations: ['category', 'options'] });
   }
@@ -73,7 +73,7 @@ export class QuestionService {
     if (res.affected === 0) throw new NotFoundException('题目不存在');
   }
 
-  // --- Option ---
+  // 选项
   async getOptionsByQuestion(questionId: number): Promise<QuestionOption[]> {
     return this.optRepo.find({ where: { questionId } });
   }
@@ -99,5 +99,65 @@ export class QuestionService {
   async deleteOption(id: number): Promise<void> {
     const res = await this.optRepo.delete(id);
     if (res.affected === 0) throw new NotFoundException('选项不存在');
+  }
+  async batchCreateOptions(
+    questionId: number,
+    options: Array<Partial<QuestionOption>>,
+  ): Promise<void> {
+    const q = await this.qRepo.findOne({ where: { questionId } });
+    if (!q) throw new NotFoundException('题目不存在');
+    const opts = options.map((opt) =>
+      this.optRepo.create({ ...opt, questionId }),
+    );
+    await this.optRepo.save(opts);
+  }
+  async getQuestionsByCategory(categoryId: number): Promise<Question[]> {
+    return this.qRepo.find({
+      where: { categoryId },
+      relations: ['category', 'options'],
+    });
+  }
+  async getQuestionsByType(
+    questionType: 'single' | 'multiple',
+  ): Promise<Question[]> {
+    return this.qRepo.find({
+      where: { questionType },
+      relations: ['category', 'options'],
+    });
+  }
+  async deleteAllOptionsByQuestion(questionId: number): Promise<void> {
+    // 先检查题目是否存在
+    const q = await this.qRepo.findOne({ where: { questionId } });
+    if (!q) throw new NotFoundException('题目不存在');
+
+    // 删除该题目下的所有选项
+    await this.optRepo.delete({ questionId });
+  }
+  //批量添加题目
+  async batchCreateQuestions(
+    questions: Array<{
+      content: string;
+      score: number;
+      questionType: 'single' | 'multiple';
+      categoryId: number;
+      options: Array<{ content: string; isCorrect: boolean }>;
+    }>,
+  ): Promise<Question[]> {
+    const createdQuestions = await Promise.all(
+      questions.map(async (qData) => {
+        // 创建题目
+        const question = await this.createQuestion({
+          content: qData.content,
+          score: qData.score,
+          questionType: qData.questionType,
+          categoryId: qData.categoryId,
+        });
+        // 批量创建选项
+        await this.batchCreateOptions(question.questionId, qData.options);
+        // 返回完整题目（包含选项）
+        return this.getQuestionById(question.questionId);
+      }),
+    );
+    return createdQuestions;
   }
 }

@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 import { ExamTemplate } from 'src/entities/exam-template.entity';
 
 @Injectable()
@@ -36,5 +40,29 @@ export class TemplateService {
   async deleteTemplate(id: number): Promise<void> {
     const result = await this.templateRepo.delete(id);
     if (result.affected === 0) throw new NotFoundException('模板不存在');
+  }
+  async getTemplatesByStatus(
+    status: 'upcoming' | 'ongoing' | 'finished',
+  ): Promise<ExamTemplate[]> {
+    const now = new Date();
+    switch (status) {
+      case 'upcoming':
+        return this.templateRepo.find({
+          where: { availableStart: MoreThan(now) },
+        });
+      case 'ongoing':
+        return this.templateRepo.find({
+          where: {
+            availableStart: LessThan(now),
+            availableEnd: MoreThan(now),
+          },
+        });
+      case 'finished':
+        return this.templateRepo.find({
+          where: { availableEnd: LessThan(now) },
+        });
+      default:
+        throw new BadRequestException('未知的 status');
+    }
   }
 }
