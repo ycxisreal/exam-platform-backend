@@ -41,4 +41,8 @@ export class UserExamController {
   async getMyExamRecords(@Param('userId') userId: number) {
     return this.userExamService.getUserExamRecords(userId);
   }
+  @Get('stats/:userId')
+  async getUserExamStats(@Param('userId') userId: number) {
+    return this.userExamService.getUserExamStats(userId);
+  }
 }

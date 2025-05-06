@@ -140,4 +140,13 @@ export class QuestionController {
   ): Promise<void> {
     return this.svc.deleteAllOptionsByQuestion(questionId);
   }
+  @Get('stats/counts')
+  async getQuestionStats() {
+    return this.svc.getQuestionStats();
+  }
+
+  @Get('stats/error-categories')
+  async getCategoryErrorStats() {
+    return this.svc.getCategoryErrorStats();
+  }
 }

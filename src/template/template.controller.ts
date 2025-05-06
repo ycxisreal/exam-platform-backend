@@ -48,4 +48,8 @@ export class TemplateController {
   ): Promise<ExamTemplate[]> {
     return this.templateService.getTemplatesByStatus(status);
   }
+  @Get('stats/count')
+  async getTemplateCount() {
+    return this.templateService.getTemplateStats();
+  }
 }

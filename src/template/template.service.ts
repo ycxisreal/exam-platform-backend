@@ -65,4 +65,7 @@ export class TemplateService {
         throw new BadRequestException('未知的 status');
     }
   }
+  async getTemplateStats() {
+    return this.templateRepo.count();
+  }
 }

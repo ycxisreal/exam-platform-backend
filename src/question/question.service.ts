@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Question } from 'src/entities/question.entity';
 import { QuestionOption } from 'src/entities/question-option.entity';
 import { QuestionCategory } from 'src/entities/question-category.entity';
+import { UserExamQuestion } from '../entities/user-exam-question.entity';
 
 @Injectable()
 export class QuestionService {
@@ -14,6 +15,8 @@ export class QuestionService {
     private readonly optRepo: Repository<QuestionOption>,
     @InjectRepository(QuestionCategory)
     private readonly catRepo: Repository<QuestionCategory>,
+    @InjectRepository(UserExamQuestion)
+    private readonly userExamQuestionRepo: Repository<UserExamQuestion>,
   ) {}
 
   //分类
@@ -159,5 +162,30 @@ export class QuestionService {
       }),
     );
     return createdQuestions;
+  }
+  async getQuestionStats() {
+    const [questionCount, categoryCount] = await Promise.all([
+      this.qRepo.count(),
+      this.catRepo.count(),
+    ]);
+
+    return { questionCount, categoryCount };
+  }
+
+  async getCategoryErrorStats() {
+    return this.userExamQuestionRepo
+      .createQueryBuilder('ueq')
+      .select('c.category_id', 'categoryId')
+      .addSelect('c.category_name', 'categoryName')
+      .addSelect('COUNT(*)', 'totalQuestions')
+      .addSelect(
+        'SUM(CASE WHEN ueq.is_correct = false THEN 1 ELSE 0 END)',
+        'errorCount',
+      )
+      .innerJoin('ueq.question', 'q')
+      .innerJoin('q.category', 'c')
+      .groupBy('c.category_id')
+      .orderBy('errorCount', 'DESC')
+      .getRawMany();
   }
 }

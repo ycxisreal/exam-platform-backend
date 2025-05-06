@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Not, Repository } from 'typeorm';
+import { DataSource, In, LessThan, MoreThan, Not, Repository } from 'typeorm';
 import {
   BadRequestException,
   Inject,
@@ -565,89 +565,45 @@ export class UserExamService {
       arr1.every((value, index) => value === arr2[index])
     );
   }
-  mockStartExam(templateId: number) {
-    console.log(templateId);
-    return {
-      userExamId: 3,
-      duration: 30,
-      questions: this.mockQuestions,
-    };
-  }
-
-  // mock：获取某次考试详情
-  mockGetExamDetail(userExamId: number) {
-    return {
-      userExamId,
-      duration: 30,
-      questions: this.mockQuestions,
-    };
-  }
-  mockSubmitExam(userExamId: number, body: any) {
-    return {
-      message: '答卷提交成功',
-      userExamId,
-      receivedAnswers: body.answers || [],
-      submittedAt: new Date().toISOString(),
-    };
-  }
-
-  mockGetScore(userExamId: number) {
-    return {
-      userExamId,
-      totalScore: 100,
-      scoreObtained: 85,
-      correctCount: 7,
-      wrongCount: 1,
-      examTime: '2025-04-14 14:00',
-      durationUsed: 18,
-      result: '通过',
-    };
-  }
-  mockWrongAnalysis(userExamId: number) {
-    return {
-      userExamId,
-      wrongQuestions: [
-        {
-          questionId: 2,
-          content: '操作前需要检查哪些安全措施？',
-          correctOptionIds: [201, 203, 204],
-          yourOptionIds: [201, 204],
-          explanation: '工具是否完好是安全检查重点，缺失此选项导致错误。',
-        },
-      ],
-      totalWrong: 1,
-    };
-  }
-
-  mockExamRecordList(userId: number) {
-    return {
-      userId,
-      records: [
-        {
-          userExamId: 4,
-          examName: '4月月考test',
-          examType: 'normal',
-          status: 'finished',
-          score: 85,
-          time: '2025-04-14 14:00',
-        },
-        {
-          userExamId: 5,
-          examName: '3月补考',
-          examType: 'makeup',
-          status: 'finished',
-          score: 92,
-          time: '2025-03-28 10:00',
-        },
-        {
-          userExamId: 6,
-          examName: 'test考试',
-          examType: 'special',
+  async getUserExamStats(userId: number) {
+    const [pending, finished, inProgress] = await Promise.all([
+      this.userExamRepo.count({
+        where: {
+          userId,
           status: 'pending',
-          score: null,
-          time: '2025-04-20 09:00',
         },
-      ],
+      }),
+      this.userExamRepo.find({
+        where: {
+          userId,
+          status: 'finished',
+        },
+        relations: ['examTemplate'],
+      }),
+      this.userExamRepo.count({
+        where: {
+          userId,
+          status: 'pending',
+          examTemplate: {
+            availableStart: LessThan(new Date()),
+            availableEnd: MoreThan(new Date()),
+          },
+        },
+        relations: ['examTemplate'],
+      }),
+    ]);
+
+    const avgScore =
+      finished.length > 0
+        ? finished.reduce((sum, exam) => sum + (exam.totalScore || 0), 0) /
+          finished.length
+        : 0;
+
+    return {
+      pendingExamCount: pending,
+      finishedExamCount: finished.length,
+      averageScore: parseFloat(avgScore.toFixed(2)),
+      inProgressExamCount: inProgress,
     };
   }
 }
